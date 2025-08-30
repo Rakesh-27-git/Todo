@@ -1,7 +1,27 @@
-import { Request, Response } from "express";
-import User from "../models/User";
 import jwt from "jsonwebtoken";
+import User from "../models/User";
+import { Request, Response } from "express";
 import { generateOTP, sendOtpEmail } from "../utils/otpHelper";
+
+const generateAccessAndRefreshToken = async (userId: string) => {
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    user.refreshToken = refreshToken;
+    await user.save({
+      validateBeforeSave: false,
+    });
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new Error("Token generation failed");
+  }
+};
 
 // Signup
 export const signUp = async (req: Request, res: Response) => {
@@ -80,21 +100,29 @@ export const verifyOTP = async (req: Request, res: Response) => {
     user.otpExpires = undefined;
     await user.save();
 
-    // Issue JWT
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
-      expiresIn: "1d",
-    });
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+      user._id as string
+    );
 
-    return res.status(200).json({
-      message: "OTP verified successfully",
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        dob: user.dob,
-      },
-    });
+    const isProduction = process.env.NODE_ENV === "production";
+    const options = {
+      httpOnly: true,
+      secure: isProduction,
+    };
+
+    return res
+      .status(200)
+      .cookie("refreshToken", refreshToken, options)
+      .cookie("accessToken", accessToken, options)
+      .json({
+        message: "OTP verified successfully",
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          dob: user.dob,
+        },
+      });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "OTP verification failed", error });
@@ -128,3 +156,57 @@ export const resendOtp = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Failed to resend OTP", error });
   }
 };
+
+export const refreshAccessToken = async (req: Request, res: Response) => {
+  const incomingRefreshToken =
+    req.cookies.refreshToken || req.body.refreshToken;
+
+  if (!incomingRefreshToken) {
+    return res.status(401).json({ message: "Unauthorized request" });
+  }
+
+  try {
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET!
+    ) as jwt.JwtPayload;
+
+    if (!decodedToken?._id) {
+      return res.status(401).json({ message: "Invalid refresh token payload" });
+    }
+
+    const user = await User.findById(decodedToken._id);
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    if (incomingRefreshToken !== user.refreshToken) {
+      return res.status(401).json({ message: "Refresh token expired or reused" });
+    }
+
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+      user._id as string
+    );
+
+    const isProduction = process.env.NODE_ENV === "production";
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "strict" as const,
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    };
+
+    return res
+      .status(200)
+      .cookie("refreshToken", refreshToken, cookieOptions)
+      .cookie("accessToken", accessToken, cookieOptions)
+      .json({
+        message: "Access token refreshed successfully",
+        accessToken,
+      });
+  } catch (error) {
+    console.error(error);
+    return res.status(401).json({ message: "Invalid or expired refresh token" });
+  }
+};
+
