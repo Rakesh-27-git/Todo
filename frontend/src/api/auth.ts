@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api", // your backend URL
+  baseURL: "http://localhost:5000/api/auth", // your backend URL
   withCredentials: true, // so cookies (JWT tokens) are included
 });
 
@@ -10,17 +10,22 @@ export const signUp = async (data: {
   dob: Date;
   email: string;
 }) => {
-  const response = await API.post("/auth/signup", data);
+  const response = await API.post("/signup", data);
   return response.data;
 };
 
 export const signIn = async (data: { email: string }) => {
-  const response = await API.post("/auth/signin", data);
+  const response = await API.post("/signin", data);
   return response.data;
 };
 
 export const verifyOtp = async (data: { email: string; otp: string }) => {
-  const response = await API.post("/auth/verify-otp", data);
+  const response = await API.post("/verify-otp", data);
+  return response.data;
+};
+
+export const getCurrentUser = async () => {
+  const response = await API.get("/me");
   return response.data;
 };
 

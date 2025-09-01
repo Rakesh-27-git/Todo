@@ -45,7 +45,9 @@ export const signUp = async (req: Request, res: Response) => {
 
     await sendOtpEmail(email, otp);
 
-    return res.status(200).json({ message: "Signup successful, OTP sent" , user });
+    return res
+      .status(200)
+      .json({ message: "Signup successful, OTP sent", user });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Signup failed", error });
@@ -68,7 +70,7 @@ export const signIn = async (req: Request, res: Response) => {
 
     await sendOtpEmail(email, otp);
 
-    return res.status(200).json({ message: "OTP sent for signin" });
+    return res.status(200).json({ message: "OTP sent for signin", user });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Signin failed", error });
@@ -185,7 +187,9 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
     }
 
     if (incomingRefreshToken !== user.refreshToken) {
-      return res.status(401).json({ message: "Refresh token expired or reused" });
+      return res
+        .status(401)
+        .json({ message: "Refresh token expired or reused" });
     }
 
     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
@@ -197,7 +201,7 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
       httpOnly: true,
       secure: isProduction,
       sameSite: "strict" as const,
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     };
 
     return res
@@ -210,7 +214,27 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
       });
   } catch (error) {
     console.error(error);
-    return res.status(401).json({ message: "Invalid or expired refresh token" });
+    return res
+      .status(401)
+      .json({ message: "Invalid or expired refresh token" });
   }
 };
 
+export const getCurrentUser = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    res.status(200).json({
+      user: {
+        id: req.user._id,
+        name: req.user.name,
+        email: req.user.email,
+        dob: req.user.dob,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch current user" });
+  }
+};

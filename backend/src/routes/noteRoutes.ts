@@ -6,7 +6,7 @@ import { verifyJWT } from "../middleware/authMiddleware";
 const router = express.Router();
 router.use(verifyJWT);
 
-router.post("/", createNote);
+router.post("/create", createNote);
 router.get("/", getNotes);
 router.delete("/:id", deleteNote);
 

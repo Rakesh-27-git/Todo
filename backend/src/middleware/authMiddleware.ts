@@ -16,9 +16,12 @@ export const verifyJWT = async (
   next: NextFunction
 ) => {
   try {
-    const token =
-      req.cookies?.accessToken ||
-      req.header("Authorization")?.replace("Bearer ", "");
+    const authHeader = req.header("Authorization");
+    let token = req.cookies?.accessToken;
+
+    if (!token && authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1]; // safely extract after "Bearer"
+    }
 
     if (!token) {
       return res.status(401).json({ message: "Unauthorized request" });
@@ -41,7 +44,7 @@ export const verifyJWT = async (
     req.user = user;
     next();
   } catch (error) {
-    console.error(error);
+    console.error("JWT verification failed:", error);
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
