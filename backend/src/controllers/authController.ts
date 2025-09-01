@@ -45,7 +45,7 @@ export const signUp = async (req: Request, res: Response) => {
 
     await sendOtpEmail(email, otp);
 
-    return res.status(200).json({ message: "Signup successful, OTP sent" });
+    return res.status(200).json({ message: "Signup successful, OTP sent" , user });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Signup failed", error });
@@ -121,6 +121,10 @@ export const verifyOTP = async (req: Request, res: Response) => {
           name: user.name,
           email: user.email,
           dob: user.dob,
+        },
+        tokens: {
+          accessToken,
+          refreshToken,
         },
       });
   } catch (error) {
