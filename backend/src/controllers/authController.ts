@@ -135,6 +135,17 @@ export const verifyOTP = async (req: Request, res: Response) => {
   }
 };
 
+export const signOut = async (req: Request, res: Response) => {
+  try {
+    res.clearCookie("refreshToken");
+    res.clearCookie("accessToken");
+    return res.status(200).json({ message: "Signed out successfully" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Sign out failed", error });
+  }
+};
+
 //  Resend OTP
 export const resendOtp = async (req: Request, res: Response) => {
   try {

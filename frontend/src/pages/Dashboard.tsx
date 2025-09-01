@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getCurrentUser } from "@/api/auth";
+import { getCurrentUser, signOut } from "@/api/auth";
 import logo from "../assets/logo.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,7 +27,7 @@ export default function Dashboard() {
   const [notes, setNotes] = useState<Array<{ _id: string; content: string }>>(
     []
   );
- 
+
   const [open, setOpen] = useState(false);
   const [noteContent, setNoteContent] = useState("");
 
@@ -89,7 +89,7 @@ export default function Dashboard() {
       }
     }
   };
- console.log(notes.map(note => note._id));
+
   return (
     <div className="h-screen mt-[50px] p-4 flex flex-col items-center">
       {/* Header */}
@@ -98,7 +98,11 @@ export default function Dashboard() {
           <img src={logo} alt="Logo" />
           <h1 className="text-xl md:text-2xl font-medium">Dashboard</h1>
         </div>
-        <Link to="/sign-in" className="text-[#367AFF] underline">
+        <Link
+          onClick={async () => await signOut()}
+          to="/sign-in"
+          className="text-[#367AFF] underline"
+        >
           Sign Out
         </Link>
       </div>

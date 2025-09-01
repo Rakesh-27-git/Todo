@@ -19,6 +19,11 @@ export const signIn = async (data: { email: string }) => {
   return response.data;
 };
 
+export const signOut = async () => {
+  const response = await API.post("/signout");
+  return response.data;
+};
+
 export const verifyOtp = async (data: { email: string; otp: string }) => {
   const response = await API.post("/verify-otp", data);
   return response.data;
