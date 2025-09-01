@@ -7,10 +7,11 @@ import noteRoutes from "./routes/noteRoutes";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
 app.use(
   cors({
-    origin: "http://localhost:5173", // your frontend URL
+    origin: FRONTEND_URL, // your frontend URL
     credentials: true, // allow cookies
   })
 );
