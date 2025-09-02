@@ -1,5 +1,4 @@
 import nodemailer from "nodemailer";
-import User from "../models/User";
 
 // generate 6-digit OTP
 export const generateOTP = () =>

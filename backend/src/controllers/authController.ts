@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
-import User from "../models/User";
+import User from "../models/User.js";
 import { Request, Response } from "express";
-import { generateOTP, sendOtpEmail } from "../utils/otpHelper";
+import { generateOTP, sendOtpEmail } from "../utils/otpHelper.js";
 
 const generateAccessAndRefreshToken = async (userId: string) => {
   try {
