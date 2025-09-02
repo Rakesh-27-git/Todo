@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
-import User from "../models/User";
+import User from "../models/User.js";
 import { Request, Response } from "express";
-import { generateOTP, sendOtpEmail } from "../utils/otpHelper";
+import { generateOTP, sendOtpEmail } from "../utils/otpHelper.js";
 
 const generateAccessAndRefreshToken = async (userId: string) => {
   try {
@@ -109,17 +109,19 @@ export const verifyOTP = async (req: Request, res: Response) => {
     const isProduction = process.env.NODE_ENV === "production";
     const cookieOptions = {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: "none" as const, //  allow cross-site cookies
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      secure: true,
+      sameSite: "none" as const, // allow cross-site cookies 
     };
 
     return res
       .status(200)
-      .cookie("refreshToken", refreshToken, cookieOptions)
+      .cookie("refreshToken", refreshToken, {
+        ...cookieOptions,
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      })
       .cookie("accessToken", accessToken, {
         ...cookieOptions,
-        maxAge: 15 * 60 * 1000, // 15 min for access token
+        maxAge: 15 * 60 * 1000, // 15 minutes
       })
       .json({
         message: "OTP verified successfully",
@@ -129,12 +131,17 @@ export const verifyOTP = async (req: Request, res: Response) => {
           email: user.email,
           dob: user.dob,
         },
+        tokens: {
+          accessToken,
+          refreshToken,
+        },
       });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "OTP verification failed", error });
   }
 };
+
 
 
 export const signOut = async (req: Request, res: Response) => {
@@ -213,14 +220,19 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
     const cookieOptions = {
       httpOnly: true,
       secure: isProduction,
-      sameSite: "strict" as const,
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      sameSite: "none" as const,
     };
 
     return res
       .status(200)
-      .cookie("refreshToken", refreshToken, cookieOptions)
-      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie("refreshToken", refreshToken, {
+        ...cookieOptions,
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      })
+      .cookie("accessToken", accessToken, {
+        ...cookieOptions,
+        maxAge: 15 * 60 * 1000, // 15 minutes
+      })
       .json({
         message: "Access token refreshed successfully",
         accessToken,
