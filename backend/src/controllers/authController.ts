@@ -109,7 +109,7 @@ export const verifyOTP = async (req: Request, res: Response) => {
     const isProduction = process.env.NODE_ENV === "production";
     const cookieOptions = {
       httpOnly: true,
-      secure: isProduction,
+      secure: true,
       sameSite: "none" as const, // allow cross-site cookies 
     };
 
